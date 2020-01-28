@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const Grammar_1 = require("./Grammar");
 class Tokenizer {
     constructor(grammar) {
         this.grammar = grammar;
@@ -32,10 +33,10 @@ class Tokenizer {
             this.idx++;
         }
         console.log("Grammar size :" + this.grammar.rightHandSides.size);
-        for (let t of this.grammar.terminals) {
+        for (let t of Grammar_1.Grammar.terminals) {
             console.log("testing : " + t.LHS);
         }
-        for (let t of this.grammar.terminals) {
+        for (let t of Grammar_1.Grammar.terminals) {
             let RHS = t.RHS;
             console.log("checking tokens : " + RHS);
             let rgx = new RegExp(RHS, "gy");

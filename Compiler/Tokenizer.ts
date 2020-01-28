@@ -54,9 +54,9 @@ export class Tokenizer
 
         console.log("Grammar size :" + this.grammar.rightHandSides.size);
 
-        for (let t of this.grammar.terminals) { console.log("testing : " + t.LHS); }
+        for (let t of Grammar.terminals) { console.log("testing : " + t.LHS); }
 
-        for (let t of this.grammar.terminals)
+        for (let t of Grammar.terminals)
         {
             let RHS: string = t.RHS;
             console.log("checking tokens : " + RHS);
