@@ -14,9 +14,9 @@ export class Grammar {
     constructor(File: string)
     {
         this.File = File;
-        console.log("=====================================\n");
-        console.log(File);
-        console.log("\n=====================================");
+        //console.log("===============GRAMMAR================");
+        //console.log(File);
+        //console.log("=====================================");
 
         let splits: string[] = this.File.split('\n');
 
@@ -129,10 +129,10 @@ export class Grammar {
             }
         });
 
-        this.CheckNonTerminals();
+        if(this.nonTerminals.length > 0)
+            this.CheckNonTerminals();
         
     }
-
     CheckNonTerminals()
     {
         //add the neighbors to the nodes
@@ -181,7 +181,7 @@ class Node
     constructor(terminal: Terminal, IsTerm: boolean = false)
     {
         this.label = terminal.LHS;
-        console.log("Added node : " + this.label);
+        //console.log("Added node : " + this.label);
         this.neighbors = new Array<Node>();
 
         this.RHS = terminal.RHS;

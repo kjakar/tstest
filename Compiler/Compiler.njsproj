@@ -32,10 +32,14 @@
     <None Include="app.ts" />
     <Content Include="package.json" />
     <Content Include="README.md" />
+    <Content Include="SYGrammar.txt" />
     <Content Include="tsconfig.json" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Grammar.ts" />
+    <TypeScriptCompile Include="shuntingyard.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="Tokenizer.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

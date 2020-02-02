@@ -1,36 +1,75 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const Grammar_1 = require("./Grammar");
 let fs = require("fs");
+const shuntingyard_1 = require("./shuntingyard");
+let testCount = 0;
 function main() {
-    let teststr = fs.readFileSync("tests.txt", "utf8");
-    let tests = JSON.parse(teststr);
-    let G;
-    for (let i = 0; i < tests.length; ++i) {
-        console.log("\n+++++++++++++++++++++ Test " + i + " +++++++++++++++++++++");
-        let spec = tests[i]["spec"];
-        let valid = tests[i]["valid"];
-        let name = tests[i]["name"];
-        try {
-            let G = new Grammar_1.Grammar(spec);
-            if (valid) {
-            }
-            else {
-                console.log("Reported grammar " + name + " as valid, but it's not.");
-                return;
-            }
+    let ok = testWithFile("basictests.txt");
+    if (ok)
+        console.log("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-Basic tests OK-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+    else
+        return;
+    ok = testWithFile("bonus1tests.txt");
+    if (ok)
+        console.log("-=-=-=-=-=-=-=-=-=-=-Bonus 1 tests (1+ argument functions) OK-=-=-=-=-=-=-=-=-=-=-");
+    else
+        return;
+    ok = testWithFile("bonus2tests.txt");
+    if (ok)
+        console.log("-=-=-=-=-=-=-=-=-=-=-Bonus 2 tests (0+ argument functions) OK-=-=-=-=-=-=-=-=-=-=-");
+    else
+        return;
+    console.log(testCount + " tests OK");
+}
+function testWithFile(fname) {
+    let data = fs.readFileSync(fname, "utf8");
+    let lst = data.split(/\n/g);
+    for (let i = 0; i < lst.length; ++i) {
+        let line = lst[i].trim();
+        if (line.length === 0)
+            continue;
+        let idx = line.indexOf("\t");
+        let inp = line.substring(0, idx);
+        let expectedStr = line.substring(idx);
+        console.log(" %%%%%% Testing " + inp + " ...");
+        ++testCount;
+        let expected = JSON.parse(expectedStr);
+        let actual = shuntingyard_1.parse(inp);
+        if (!treesAreSame(actual, expected)) {
+            console.log("BAD!");
+            return false;
         }
-        catch (e) {
-            if (valid) {
-                console.log("Reported grammar " + name + " as invalid, but it's valid.");
-                console.log(e);
-                return;
-            }
-            else {
-            }
+        else {
         }
     }
-    console.log(tests.length + " tests OK");
+    console.log("GOOD!");
+    return true;
+}
+function treesAreSame(n1, n2) {
+    console.log("Node : " + n2["sym"]);
+    if (n1 === undefined && n2 !== undefined) {
+        console.log("Case 1");
+        return false;
+    }
+    if (n2 === undefined && n1 !== undefined) {
+        console.log("Case 2");
+        return false;
+    }
+    if (n1["sym"] != n2["sym"]) {
+        console.log("Case 3 : " + n1["sym"] + " : " + n2["sym"]);
+        return false;
+    }
+    if (n1["children"].length != n2["children"].length) {
+        console.log("Case 4");
+        return false;
+    }
+    for (let i = 0; i < n1["children"].length; ++i) {
+        if (!treesAreSame(n1["children"][i], n2["children"][i])) {
+            console.log("Case 5");
+            return false;
+        }
+    }
+    return true;
 }
 main();
 //# sourceMappingURL=app.js.map

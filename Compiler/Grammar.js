@@ -9,9 +9,9 @@ class Grammar {
         this.startingNode = null;
         this.visitedNodes = new Set();
         this.File = File;
-        console.log("=====================================\n");
-        console.log(File);
-        console.log("\n=====================================");
+        //console.log("===============GRAMMAR================");
+        //console.log(File);
+        //console.log("=====================================");
         let splits = this.File.split('\n');
         let parsingNonTerminals = false;
         splits.forEach((value) => {
@@ -99,7 +99,8 @@ class Grammar {
                 //console.log("parsing non-terminals...");
             }
         });
-        this.CheckNonTerminals();
+        if (this.nonTerminals.length > 0)
+            this.CheckNonTerminals();
     }
     CheckNonTerminals() {
         //add the neighbors to the nodes
@@ -133,7 +134,7 @@ Grammar.terminals = new Array();
 class Node {
     constructor(terminal, IsTerm = false) {
         this.label = terminal.LHS;
-        console.log("Added node : " + this.label);
+        //console.log("Added node : " + this.label);
         this.neighbors = new Array();
         this.RHS = terminal.RHS;
         this.isTerm = IsTerm;

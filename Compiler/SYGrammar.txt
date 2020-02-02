@@ -1,0 +1,9 @@
+POWOP -> [*][*]
+MULOP -> [*]|/
+ADDOP -> [+]|[-]
+NUM -> \d+
+ID ->  \w+
+RPAREN -> [)]
+LPAREN -> [(]
+BITNOT -> ~
+COMMA -> ,
