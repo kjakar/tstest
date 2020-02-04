@@ -10,13 +10,27 @@ export class Tokenizer
     idx: number;    //index of next unparsed char in inputData
     eof: number;
     line: number;
+    tokens: Array<Token>;
 
     constructor(grammar: Grammar)
     {
+        this.tokens = [];
         this.grammar = grammar;
         this.idx = 0;
         this.line = 0;
         console.log("Tokenizer Constructed...");
+
+        /* //this could be used to make previous token work easier but would need some work such as renaming the "next"
+         * // used inside of the while below to somthing else, and implementing a new next for all of the classes calling the next in the while loop below
+        while (true)
+        {
+            let t: Token = this.next();
+            this.tokens.push(t);
+            if (t.sym == "$")
+                break;
+        }
+        */
+
     }
     setInput(inputData: string)
     {
@@ -143,9 +157,9 @@ export class Tokenizer
             return new Token("$", undefined, this.line)
         }
 
-        if (this.idx - offset < 0)
+        if (this.idx - offset < 0) //we looked at the start of the file for a previous token
         {
-            throw new error("Looked for previous token at beginging of file");
+            return new Token(undefined, undefined, 0);
         }
 
         while (this.inputData[this.idx - offset] == ' ' || this.inputData[this.idx - offset] == '\t' || this.inputData[this.idx - offset] == '\n')

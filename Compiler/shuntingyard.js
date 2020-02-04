@@ -81,7 +81,9 @@ function parse(input) {
                 console.log("Changed to NEGATE");
             }
         }
-        if (n.sym == "RPAREN") {
+        if (arity[n.sym] == 1 && handedness[n.sym] == "RIGHT")
+            operatorStack.push(n);
+        else if (n.sym == "RPAREN") {
             while (operatorStack.peek().sym != "LPAREN") {
                 DoOperation();
             }
