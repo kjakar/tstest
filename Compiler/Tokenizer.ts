@@ -14,7 +14,7 @@ export class Tokenizer
     {
         this.grammar = grammar;
         this.idx = 0;
-        this.line = 0;
+        this.line = 1;
         console.log("Tokenizer Constructed...");
     }
     setInput(inputData: string)
@@ -28,7 +28,7 @@ export class Tokenizer
     }
     next(): Token
     {
-        console.log("Input Data : " + this.inputData.substr(this.idx, 100) + " : End Input Data ");
+        console.log("Input Data : " + this.inputData.substr(this.idx, 100) + " : End Input Data : length ='s " + this.inputData.substr(this.idx).length);
         //...return next token...
         //...advance this.idx...
         //...adjust this.currentLine...
@@ -49,12 +49,16 @@ export class Tokenizer
             this.idx++;
             
         }
-
-        
+        if (this.inputData.substr(this.idx).length == 0)
+        {
+            return new Token("$", undefined, this.line)
+        }
 
         console.log("Grammar size :" + this.grammar.rightHandSides.size);
 
         for (let t of this.grammar.terminals) { console.log("testing : " + t.LHS); }
+
+        let lineAdjustment: number = 0;
 
         for (let t of this.grammar.terminals)
         {
@@ -71,55 +75,27 @@ export class Tokenizer
                 sym = t.LHS;
                 this.idx += lexeme.length;
 
+                
                 for (let i = 0; i < lexeme.length; i++) {
                     if (lexeme[i] == '\n') {
-                        this.line += 1;
-                        console.log("new line : " + this.line);
+                        lineAdjustment += 1;
+                        console.log("new line in token: " + (this.line + lineAdjustment));
                     }
                 }
+                
 
                 break;
             }
-        }
-        {
-            /*
-            let LHS = 0;
-            for (let i = 0; i < this.grammar.rightHandSides.size; i++)
-            {
-                let RHS : string = this.grammar.rightHandSides[i];
-                console.log("checking tokens : " + this.grammar.rightHandSides[i]);
-                let rgx: RegExp = new RegExp(RHS, "gs");
-                let returnValue = rgx.exec(this.inputData.substr(this.idx))[0];
-                console.log("Return value :" + returnValue[0]);
-    
-                if (returnValue[0] != undefined)
-                {
-                    console.log("Processing...");
-    
-                    lexeme = returnValue[0];
-                    sym = this.grammar.leftHandSides[LHS];
-                    this.idx += lexeme.length;
-    
-                    for (let i = 0; i < lexeme.length; i++)
-                    {
-                        if (lexeme[i] == '\n')
-                        {
-                            line += 1;
-                            console.log("new line : " + line);
-                        }
-                    }
-    
-                    break;
-                }
-                LHS++
-            }
-            */
         }
 
         if (sym == "COMMENT")
             return this.next();
         else
-        return new Token(sym, lexeme, this.line);
+        {
+            let t: Token = new Token(sym, lexeme, this.line);
+            this.line += lineAdjustment;
+            return t;
+        }
     }
 }
 
