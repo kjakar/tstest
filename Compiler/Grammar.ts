@@ -100,7 +100,7 @@ export class Grammar {
                     let n: Node = new Node(t);
                     if (this.startingNode == null)
                     {
-                        console.log("Starting node : " + n.label);
+                        //console.log("Starting node : " + n.label);
                         this.startingNode = n;
                     }
 
@@ -133,6 +133,7 @@ export class Grammar {
             this.CheckNonTerminals();
         
     }
+
     CheckNonTerminals()
     {
         //add the neighbors to the nodes
@@ -147,7 +148,7 @@ export class Grammar {
 
         this.nodes.forEach((n: Node) =>
         {
-            if (!this.visitedNodes.has(n.label))
+            if (!this.visitedNodes.has(n.label) && n.label != "COMMENT")
             {
                 throw new Error("There is no way to reach the non-terminal : " + n.label);
             }
@@ -157,7 +158,7 @@ export class Grammar {
     DepthFirstSearch(node: Node, visited: Set<string>)
     {
         visited.add(node.label);
-        console.log("Visited node : " + node.label);
+        //console.log("Visited node : " + node.label);
         if (node.neighbors != undefined) {
             node.neighbors.forEach((w: Node) => {
                 if (!visited.has(w.label)) {
@@ -167,8 +168,61 @@ export class Grammar {
         }
         else
         {
-            console.log("There are no neighbors");
+            //console.log("There are no neighbors");
         }
+    }
+
+    nullable: Set<string> = new Set<string>();
+
+    getNullable(): Set<string>
+    {
+        this.nullable.add("lambda");
+
+        while (true)
+        {
+            let updated: boolean = false; //we use this to find out if the nullable set is stable
+
+            this.nonTerminals.forEach((nt) =>
+            {
+                //console.log("Checking : " + nt.LHS + " : RHS ='s : " + nt.RHS);
+                if (!this.nullable.has(nt.LHS)) //it's not nullable (yet)
+                {
+                    let splits = nt.RHS.split('|'); //all of the productions of the non-terminal 
+
+                    for (let i: number = 0; i < splits.length; i++)
+                    {
+                        //console.log(splits[i].trim());
+                        let dubSplits = splits[i].trim().split(" "); // the production broken up into parts
+
+                        let allNullable = true; //used as a flag
+                        for (let i: number = 0; i < dubSplits.length; i++)
+                        {
+                            //console.log("\t" + dubSplits[i].trim());
+                            if (!this.nullable.has(dubSplits[i].trim()))
+                            {   //we found somthing that isn't nullable
+                                allNullable = false; 
+                            }
+
+                        }
+
+                        if (allNullable)
+                        {   
+                            //we add the non-terminal to the nullable set
+                            if (!this.nullable.has(nt.LHS))
+                                this.nullable.add(nt.LHS);
+                            updated = true;
+                        }
+                    }
+                }
+            });
+
+            if (!updated) //we made no changes to the nullable set so it is stable.
+                break;
+        }
+
+        this.nullable.delete("lambda");
+
+        return this.nullable;
     }
 }
 
@@ -189,7 +243,8 @@ class Node
         this.isTerm = IsTerm;
     }
 
-    AddNeighbor(nodes: Array<Node>) {
+    AddNeighbor(nodes: Array<Node>)
+    {
         if (!this.isTerm)
         {
             let splits: string[] = this.RHS.split(' ');
@@ -197,7 +252,7 @@ class Node
             splits.forEach((s) =>
             {
                 s = s.trim();
-                if (s != "|")
+                if (s != "|" && s != "lambda")
                 {
                     let missing: boolean = true;
                     nodes.forEach((n: Node) =>
@@ -206,7 +261,7 @@ class Node
                         {
                             this.neighbors.push(n);
                             missing = false;
-                            console.log(this.label + " : Gained neighbor : " + s);
+                            //console.log(this.label + " : Gained neighbor : " + s);
                         }
                     });
 

@@ -8,6 +8,7 @@ class Grammar {
         this.nodes = new Array();
         this.startingNode = null;
         this.visitedNodes = new Set();
+        this.nullable = new Set();
         this.File = File;
         //console.log("===============GRAMMAR================");
         //console.log(File);
@@ -77,7 +78,7 @@ class Grammar {
                     //console.log("Non-terminal:   LHS : " + sides[0] + " RHS : " + sides[1]);
                     let n = new Node(t);
                     if (this.startingNode == null) {
-                        console.log("Starting node : " + n.label);
+                        //console.log("Starting node : " + n.label);
                         this.startingNode = n;
                     }
                     let alreadyExists = false;
@@ -109,14 +110,14 @@ class Grammar {
         });
         this.DepthFirstSearch(this.startingNode, this.visitedNodes);
         this.nodes.forEach((n) => {
-            if (!this.visitedNodes.has(n.label)) {
+            if (!this.visitedNodes.has(n.label) && n.label != "COMMENT") {
                 throw new Error("There is no way to reach the non-terminal : " + n.label);
             }
         });
     }
     DepthFirstSearch(node, visited) {
         visited.add(node.label);
-        console.log("Visited node : " + node.label);
+        //console.log("Visited node : " + node.label);
         if (node.neighbors != undefined) {
             node.neighbors.forEach((w) => {
                 if (!visited.has(w.label)) {
@@ -125,8 +126,42 @@ class Grammar {
             });
         }
         else {
-            console.log("There are no neighbors");
+            //console.log("There are no neighbors");
         }
+    }
+    getNullable() {
+        this.nullable.add("lambda");
+        while (true) {
+            let updated = false; //we use this to find out if the nullable set is stable
+            this.nonTerminals.forEach((nt) => {
+                //console.log("Checking : " + nt.LHS + " : RHS ='s : " + nt.RHS);
+                if (!this.nullable.has(nt.LHS)) //it's not nullable (yet)
+                 {
+                    let splits = nt.RHS.split('|'); //all of the productions of the non-terminal 
+                    for (let i = 0; i < splits.length; i++) {
+                        //console.log(splits[i].trim());
+                        let dubSplits = splits[i].trim().split(" "); // the production broken up into parts
+                        let allNullable = true; //used as a flag
+                        for (let i = 0; i < dubSplits.length; i++) {
+                            //console.log("\t" + dubSplits[i].trim());
+                            if (!this.nullable.has(dubSplits[i].trim())) { //we found somthing that isn't nullable
+                                allNullable = false;
+                            }
+                        }
+                        if (allNullable) {
+                            //we add the non-terminal to the nullable set
+                            if (!this.nullable.has(nt.LHS))
+                                this.nullable.add(nt.LHS);
+                            updated = true;
+                        }
+                    }
+                }
+            });
+            if (!updated) //we made no changes to the nullable set so it is stable.
+                break;
+        }
+        this.nullable.delete("lambda");
+        return this.nullable;
     }
 }
 exports.Grammar = Grammar;
@@ -144,13 +179,13 @@ class Node {
             let splits = this.RHS.split(' ');
             splits.forEach((s) => {
                 s = s.trim();
-                if (s != "|") {
+                if (s != "|" && s != "lambda") {
                     let missing = true;
                     nodes.forEach((n) => {
                         if (n.label == s) {
                             this.neighbors.push(n);
                             missing = false;
-                            console.log(this.label + " : Gained neighbor : " + s);
+                            //console.log(this.label + " : Gained neighbor : " + s);
                         }
                     });
                     if (missing) {

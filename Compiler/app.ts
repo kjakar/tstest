@@ -1,91 +1,63 @@
 
 declare var require: any;
 let fs = require("fs");
-
-import { parse } from "./shuntingyard"
-
-let testCount = 0;
+import { Grammar } from "./Grammar";
 
 function main() {
-    let ok = testWithFile("basictests.txt");
-    if (ok)
-        console.log("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-Basic tests OK-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
-    else
-        return;
+    let data: string = fs.readFileSync("tests.txt", "utf8");
+    let tests: any = JSON.parse(data);
+    let numPassed = 0;
+    let numFailed = 0;
 
-    ok = testWithFile("bonus1tests.txt");
-    if (ok)
-        console.log("-=-=-=-=-=-=-=-=-=-=-Bonus 1 tests (1+ argument functions) OK-=-=-=-=-=-=-=-=-=-=-");
-    else
-        return;
+    for (let i = 0; i < tests.length; ++i) {
 
-    ok = testWithFile("bonus2tests.txt");
-    if (ok)
-        console.log("-=-=-=-=-=-=-=-=-=-=-Bonus 2 tests (0+ argument functions) OK-=-=-=-=-=-=-=-=-=-=-");
-    else
-        return;
-    console.log(testCount + " tests OK");
-}
+        let name: string = tests[i]["name"];
+        let expected: any = tests[i]["nullable"];
+        let input: string = tests[i]["input"];
 
-function testWithFile(fname: string): boolean {
-    let data: string = fs.readFileSync(fname, "utf8");
-    let lst = data.split(/\n/g);
-    for (let i = 0; i < lst.length; ++i) {
-        let line = lst[i].trim();
-        if (line.length === 0)
-            continue;
-        let idx = line.indexOf("\t");
-        let inp = line.substring(0, idx);
-        let expectedStr = line.substring(idx);
-        console.log(" %%%%%% Testing " + inp + " ...");
-        ++testCount;
-        let expected = JSON.parse(expectedStr);
-        let actual = parse(inp);
-
-        if (!treesAreSame(actual, expected)) {
-            console.log("BAD!")
-            return false;
-        } else {
+        let G = new Grammar(input);
+        let nullable: any = G.getNullable();
+        if (!setsAreSame(nullable, expected)) {
+            console.log("Test " + name + " failed");
+            ++numFailed;
         }
+        else
+            ++numPassed;
     }
-    console.log("GOOD!")
-    return true;
+    console.log(numPassed + " tests OK" + "      " + numFailed + " tests failed");
+    return numFailed == 0;
 }
 
-function treesAreSame(n1: any, n2: any)
-{
-    console.log("Node : " + n2["sym"]);
-    if (n1 === undefined && n2 !== undefined)
+function setsAreSame(s1: any, s2: any) {
+    let L1: string[] = [];
+    let L2: string[] = [];
+
+    s1.forEach((x: string) => {
+        L1.push(x);
+    });
+    s2.forEach((x: string) => {
+        L2.push(x);
+    });
+    L1.sort();
+    L2.sort();
+    if (L1.length !== L2.length)
     {
-        console.log("Case 1");
+        console.log("Fail case 1");
+        console.log(L1.length + " : " + L2.length)
         return false;
     }
-        
-    if (n2 === undefined && n1 !== undefined)
+       
+    for (let i = 0; i < L1.length; ++i)
     {
-        console.log("Case 2");
-        return false;
-    }
-    if (n1["sym"] != n2["sym"])
-    {
-        console.log("Case 3 : " + n1["sym"] + " : " + n2["sym"]);
-        return false;
-    }
-    if (n1["children"].length != n2["children"].length)
-    {
-        console.log("Case 4");
-        return false;
-    }
-    for (let i = 0; i < n1["children"].length; ++i) {
-        if (!treesAreSame(n1["children"][i], n2["children"][i]))
+        if (L1[i] !== L2[i])
         {
-            console.log("Case 5");
+            console.log("Fail case 2");
+            console.log("Found: " + L1[i] + " : Expected : " + L2[i]);
             return false;
         }
     }
     return true;
 }
-
 
 
 
