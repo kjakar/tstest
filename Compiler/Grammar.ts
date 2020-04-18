@@ -11,7 +11,8 @@ export class Grammar {
     startingNode: Node = null;
     visitedNodes: Set<string> = new Set<string>();
     addComments: boolean = false;
-
+    first: Map<string, Set<string>>;
+    startSymbol: string;
     constructor(File: string)
     {
         this.File = File;
@@ -96,7 +97,10 @@ export class Grammar {
                     sides[0] = sides[0].trim();
                     sides[1] = sides[1].trim();
 
-                   
+                    if (this.startSymbol == null) //grab the start symbol for the follows function
+                        this.startSymbol = sides[0];
+
+
                     //build the terminal and the node
                     let t: Terminal = new Terminal(sides[0], sides[1])
                     this.nonTerminals.push(t);
@@ -159,6 +163,8 @@ export class Grammar {
                 throw new Error("There is no way to reach the non-terminal : " + n.label);
             }
         });
+
+        this.first = this.getFirst();
     }
 
     DepthFirstSearch(node: Node, visited: Set<string>)
@@ -382,6 +388,138 @@ export class Grammar {
         catch (error) { }
         return val;
     }
+
+    getFollow() : Map<string, Set<string>>
+    {
+        var follow = new Map<string, Set<string>>();
+        console.log("@@@@@@@@@@@@ NON_TERMINALS @@@@@@@@@@@@@@@@@@@@")
+        this.nonTerminals.forEach((value: Terminal) => { follow.set(value.LHS, new Set<string>()); console.log(value.toString())}); //init the map with empty sets.
+        follow.get(this.startSymbol).add("$"); //add '$' to the start symbol
+       
+        console.log("@@@@@@@@@@@@NULLABLES @@@@@@@@@@@@@@@@@@@@")
+        this.nullable.forEach((value: string) => { console.log(value) });
+
+        console.log("$$$", this.startSymbol);
+
+
+        let updated = false;
+        while (true)
+        {
+            updated = false; // rest this each time or it'll just stay true
+
+            for (let i = 0; i < this.nonTerminals.length; i++)
+            {
+                let N = this.nonTerminals[i].LHS;
+                let P = this.nonTerminals[i].RHS.split('|'); // all of the productions of N
+                for (let j = 0; j < P.length; j++)
+                {
+                    P[j] = P[j].trim();
+                    var x = P[j].split(' '); //'x' holds the individual parts of the production
+                    for (let k = 0; k < x.length; k++)
+                    {
+                        let isNT = false;
+                        for (let l = 0; l < this.nonTerminals.length; l++)
+                        {
+                            if (this.nonTerminals[l].LHS == x[k]) //x[k] is a nonterminal
+                            {
+                                isNT = true;
+                                break;
+                            }
+                        }
+
+                        if (isNT)
+                        {
+                            
+                            if (x[k+1] != null)
+                            {
+                                let isNullable = false;
+                                var y = x[k + 1]; //this is the terminal/nonterminal that follows x[k] so we add it's first
+                                if (this.SetCompare(follow.get(x[k]), this.first.get(y))) //we do this to see if we are making any changes to the first set.
+                                {
+                                    let uSet = this.Union(follow.get(x[k]), this.first.get(y));
+                                    console.log("=== Union 1 ===", x[k], (follow.get(x[k])));
+                                    console.log("====First======", y, (this.first.get(y)));
+                                    follow.set(x[k], uSet);
+                                    updated = true;
+
+                                }
+
+                                let offset = this.AllNullable(x, k + 1);
+
+                                if (offset == 0) { isNullable = true; }
+                                else
+                                {
+                                    if (this.SetCompare(follow.get(x[k]), this.first.get(x[offset]))) //we do this to see if we are making any changes to the first set.
+                                    {
+                                        let uSet = this.Union(follow.get(x[k]), this.first.get(x[offset]));
+                                        console.log("=== Union 1 ===", x[k], (follow.get(x[k])));
+                                        console.log("====First======", x[offset], (this.first.get(x[offset])));
+                                        follow.set(x[k], uSet);
+                                        updated = true;
+                                    }
+                                }
+
+                                //if we didn't break out
+                                if ( isNullable && this.SetCompare(follow.get(x[k]), follow.get(N))) //we do this to see if we are making any changes to the first set.
+                                {
+                                    //the terminal after this is nullable so we add the LHS's follow to it's follow
+                                    let uSet = this.Union(follow.get(x[k]), follow.get(N));
+                                    console.log("=== Union 2 ===", x[k], (follow.get(x[k])));
+                                    console.log("===============", N, (follow.get(N)));
+                                    follow.set(x[k], uSet);
+                                    updated = true;
+                                }
+                            }
+                            else //this non-terminal is the last thing in the production so we add the LHS's follows to it's follows
+                            {
+                                
+                                if (this.SetCompare(follow.get(x[k]), follow.get(N))) //we do this to see if we are making any changes to the first set.
+                                {
+                                    let uSet = this.Union(follow.get(x[k]), follow.get(N));
+                                    console.log("=== Union 3 ===", x[k], (follow.get(x[k])));
+                                    console.log("===============", N, follow.get(N));
+                                    follow.set(x[k], uSet);
+                                    updated = true;
+
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+            if (updated == false)
+                break; //we didn't change anything so we are done;
+        }
+
+        console.log("@@@@@@@@    Follow final   @@@@@@@@@@@@");
+        follow.forEach((value: Set<string>, key: string) => { console.log(key, value); });
+        console.log("@@@@@@@@Follow final   @@@@@@@@@@@@");
+        return follow
+    }
+
+
+    //retruns 0 if all are nullable, returns an index if there is somthing that isn't
+    AllNullable(x: string[], i: number) : number
+    {
+        let idx = 0;
+
+        if (x[i] != null)
+        {
+            if (this.nullable.has(x[i])) {
+                idx = this.AllNullable(x, i + 1);
+            }
+            else
+            {
+                //the terminal/non-terminal was not nullable so we want to return the index where it was found
+                idx = i;
+            }
+        }
+
+        return idx;
+    }
+
+
 }
 
 class Node

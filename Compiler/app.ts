@@ -12,22 +12,25 @@ function main() {
     for (let i = 0; i < tests.length; ++i) {
 
         let name: string = tests[i]["name"];
-        if (true)//name != "g6.txt")
+
+        if (true)//name == "g6.txt") 
         {
-            let expected: { [key: string]: string[] } = tests[i]["first"];
-            //console.log(expected);
+
+            let expected: { [key: string]: string[] } = tests[i]["follow"];
             let input: string = tests[i]["input"];
 
             let G = new Grammar(input);
 
-            let first: Map<string, Set<string>> = G.getFirst();
+            let first: Map<string, Set<string>> = G.getFollow();
             if (!dictionariesAreSame(expected, first)) {
                 console.log("Test " + name + " failed");
                 ++numFailed;
-                i = 1000;
+                console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TEST FAILED : " + name + "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             }
-            else
+            else {
+                console.log("################################ TEST PASSESD : " + name + "################################");
                 ++numPassed;
+            }
         }
     }
     console.log(numPassed + " tests OK" + "      " + numFailed + " tests failed");
@@ -47,12 +50,12 @@ function dictionariesAreSame(s1: { [key: string]: string[] }, s2: Map<string, Se
     k1.sort();
     k2.sort();
     if (!listsEqual(k1, k2)) {
-        console.log("Lists not equal 1:", k1, k2);
+        console.log("Lists not equal:", k1, k2);
         return false;
     }
     for (let k of k1) {
         if (!listsEqual(M1.get(k), M2.get(k))) {
-            console.log("Lists not equal 2:", M1.get(k), M2.get(k));
+            console.log("Lists not equal:", M1.get(k), M2.get(k));
             return false;
         }
     }
