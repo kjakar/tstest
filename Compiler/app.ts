@@ -12,49 +12,81 @@ function main() {
     for (let i = 0; i < tests.length; ++i) {
 
         let name: string = tests[i]["name"];
-        let expected: any = tests[i]["nullable"];
-        let input: string = tests[i]["input"];
+        if (true)//name != "g6.txt")
+        {
+            let expected: { [key: string]: string[] } = tests[i]["first"];
+            //console.log(expected);
+            let input: string = tests[i]["input"];
 
-        let G = new Grammar(input);
-        let nullable: any = G.getNullable();
-        if (!setsAreSame(nullable, expected)) {
-            console.log("Test " + name + " failed");
-            ++numFailed;
+            let G = new Grammar(input);
+
+            let first: Map<string, Set<string>> = G.getFirst();
+            if (!dictionariesAreSame(expected, first)) {
+                console.log("Test " + name + " failed");
+                ++numFailed;
+                i = 1000;
+            }
+            else
+                ++numPassed;
         }
-        else
-            ++numPassed;
     }
     console.log(numPassed + " tests OK" + "      " + numFailed + " tests failed");
     return numFailed == 0;
 }
 
-function setsAreSame(s1: any, s2: any) {
+function dictionariesAreSame(s1: { [key: string]: string[] }, s2: Map<string, Set<string>>) {
+    let M1: Map<string, Set<string>> = toMap(s1);
+    let M2 = s2;
+
+    let k1: string[] = [];
+    let k2: string[] = [];
+    for (let k of M1.keys())
+        k1.push(k);
+    for (let k of M2.keys())
+        k2.push(k);
+    k1.sort();
+    k2.sort();
+    if (!listsEqual(k1, k2)) {
+        console.log("Lists not equal 1:", k1, k2);
+        return false;
+    }
+    for (let k of k1) {
+        if (!listsEqual(M1.get(k), M2.get(k))) {
+            console.log("Lists not equal 2:", M1.get(k), M2.get(k));
+            return false;
+        }
+    }
+    return true;
+}
+
+function toMap(s: { [key: string]: string[] }) {
+    let r: Map<string, Set<string>> = new Map();
+    for (let k in s) {
+        r.set(k, new Set());
+        s[k].forEach((x: string) => {
+            r.get(k).add(x);
+        });
+    }
+    return r;
+}
+
+function listsEqual(L1a: any, L2a: any) {
     let L1: string[] = [];
     let L2: string[] = [];
-
-    s1.forEach((x: string) => {
+    L1a.forEach((x: string) => {
         L1.push(x);
     });
-    s2.forEach((x: string) => {
+    L2a.forEach((x: string) => {
         L2.push(x);
     });
+
     L1.sort();
     L2.sort();
     if (L1.length !== L2.length)
-    {
-        console.log("Fail case 1");
-        console.log(L1.length + " : " + L2.length)
         return false;
-    }
-       
-    for (let i = 0; i < L1.length; ++i)
-    {
+    for (let i = 0; i < L1.length; ++i) {
         if (L1[i] !== L2[i])
-        {
-            console.log("Fail case 2");
-            console.log("Found: " + L1[i] + " : Expected : " + L2[i]);
             return false;
-        }
     }
     return true;
 }

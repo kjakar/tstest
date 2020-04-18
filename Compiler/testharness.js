@@ -9,21 +9,16 @@ function main() {
     let numFailed = 0;
     for (let i = 0; i < tests.length; ++i) {
         let name = tests[i]["name"];
-        if (true) //name != "g6.txt")
-         {
-            let expected = tests[i]["first"];
-            //console.log(expected);
-            let input = tests[i]["input"];
-            let G = new Grammar_1.Grammar(input);
-            let first = G.getFirst();
-            if (!dictionariesAreSame(expected, first)) {
-                console.log("Test " + name + " failed");
-                ++numFailed;
-                i = 1000;
-            }
-            else
-                ++numPassed;
+        let expected = tests[i]["first"];
+        let input = tests[i]["input"];
+        let G = new Grammar_1.Grammar(input);
+        let first = G.getFirst();
+        if (!dictionariesAreSame(expected, first)) {
+            console.log("Test " + name + " failed");
+            ++numFailed;
         }
+        else
+            ++numPassed;
     }
     console.log(numPassed + " tests OK" + "      " + numFailed + " tests failed");
     return numFailed == 0;
@@ -40,12 +35,12 @@ function dictionariesAreSame(s1, s2) {
     k1.sort();
     k2.sort();
     if (!listsEqual(k1, k2)) {
-        console.log("Lists not equal 1:", k1, k2);
+        console.log("Lists not equal:", k1, k2);
         return false;
     }
     for (let k of k1) {
         if (!listsEqual(M1.get(k), M2.get(k))) {
-            console.log("Lists not equal 2:", M1.get(k), M2.get(k));
+            console.log("Lists not equal:", M1.get(k), M2.get(k));
             return false;
         }
     }
@@ -81,4 +76,4 @@ function listsEqual(L1a, L2a) {
     return true;
 }
 main();
-//# sourceMappingURL=app.js.map
+//# sourceMappingURL=testharness.js.map

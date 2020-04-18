@@ -10,6 +10,7 @@ export class Grammar {
     nodes: Array<Node> = new Array<Node>();
     startingNode: Node = null;
     visitedNodes: Set<string> = new Set<string>();
+    addComments: boolean = false;
 
     constructor(File: string)
     {
@@ -40,6 +41,12 @@ export class Grammar {
                     //remove the whitespace around the strings
                     sides[0] = sides[0].trim();
                     sides[1] = sides[1].trim();
+
+                    
+                    if (sides[0] == "COMMENT")
+                    {
+                        this.addComments = true;
+                    }
 
                     //make sure we have only seen the left hand side once
                     if (this.leftHandSides.has(sides[0])) {
@@ -84,13 +91,12 @@ export class Grammar {
                         //console.log("sides count ='s : " + sides.length);
                         //sides.forEach((value) => { console.log(value); });
                         throw new Error("Invalid grammar structure : " + sides[0]);
-                    }
-
+                    }0
                     //remove the whitespace around RHS //
                     sides[0] = sides[0].trim();
                     sides[1] = sides[1].trim();
 
-
+                   
                     //build the terminal and the node
                     let t: Terminal = new Terminal(sides[0], sides[1])
                     this.nonTerminals.push(t);
@@ -223,6 +229,158 @@ export class Grammar {
         this.nullable.delete("lambda");
 
         return this.nullable;
+    }
+
+    getFirst(): Map<string, Set<string>>
+    {
+        //console.log("@@@@@@@@@ nullables @@@@@@@@");
+        this.getNullable();
+        //this.nullable.forEach((value: string) => { console.log(value); });
+
+        //init the map
+        var first = new Map<string, Set<string>>();
+        //init terminals
+        //console.log("@@@@@@@@@ terminals @@@@@@@@");
+        for (let h = 0; h < Grammar.terminals.length; h++)
+        {
+            var used = false;
+            for (let i = 0; i < this.nonTerminals.length; i++)//for all nonterminals N:
+            {
+                var p = this.nonTerminals[i].RHS.split('|'); //this breaks all the productions up
+                for (let j = 0; j < p.length; j++)//for all productions P
+                {
+                    p[j] = p[j].trim();
+                    var x = p[j].split(' ');
+                    for (let k = 0; k < x.length; k++) //for x in P
+                    {
+                        if (x[k] == Grammar.terminals[h].LHS)
+                        {
+                            used = true;
+                            j = p.length;
+                        }
+                    }
+                }
+            }
+
+            if (used) {
+                //console.log(Grammar.terminals[h].toString());
+                var set = new Set<string>();
+                set.add(Grammar.terminals[h].LHS)
+                first.set(Grammar.terminals[h].LHS, set);
+            }
+            else if (Grammar.terminals[h].LHS == "COMMENT")
+            {
+                if (this.addComments)
+                {
+                    var set = new Set<string>();
+                    set.add(Grammar.terminals[h].LHS)
+                    first.set(Grammar.terminals[h].LHS, set);
+                }
+                
+            }
+            else
+            {
+                //console.log(Grammar.terminals[h].toString() + " : UNUSED");
+            }
+
+        }
+
+        //init nonterminals with an empty set
+        //console.log("@@@@@@@@@ non-terminals @@@@@@@@");
+        for (let i = 0; i < this.nonTerminals.length; i++)//for all nonterminals N:
+        {
+            //console.log(this.nonTerminals[i].toString());
+            var N = this.nonTerminals[i].LHS;
+            var S = new Set<string>();
+            first.set(N, S);
+        }
+
+        var updated = false; //how we check if the first set is stable
+        while (true)
+        {
+           
+            updated = false;
+            for (let i = 0; i < this.nonTerminals.length; i++)//for all nonterminals N:
+            {
+                var N = this.nonTerminals[i].LHS;
+                var p = this.nonTerminals[i].RHS.split('|'); //this breaks all the productions up
+                for (let j = 0; j < p.length; j++)//for all productions P
+                {
+                    p[j] = p[j].trim();
+                    var x = p[j].split(' ');
+                    
+                    for (let k = 0; k < x.length; k++) //for x in P
+                    {
+                        var term = false; //is x a terminal
+                        var set = new Set<string>();
+                        //check if the first object in the production is a terminal
+                        for (let k = 0; k < Grammar.terminals.length; k++)
+                        {
+                            if (Grammar.terminals[k].LHS == x[k])
+                                term = true;
+                        }
+                        if (term) //the first object in the production is a terminal so we add it to first
+                        {
+                            set.add(x[k]);
+                            var uSet = this.Union(first.get(N), set);
+                            if (this.SetCompare(first.get(N), first.get(x[k]))) //if there isn't anything to add we don't add it
+                            {
+                                updated = true;
+                                first.set(N, uSet);
+                            }
+                        }
+                        else
+                        {
+                            var uSet = this.Union(first.get(N), first.get(x[k]));
+
+                            if (this.SetCompare(first.get(N), first.get(x[k])))
+                                updated = true;
+                            first.set(N, uSet);
+                        }
+                        if (!this.nullable.has(x[k]))
+                            break;
+                    }
+                }
+            }
+            if (updated == false)
+                break; //we are stable if we hit this
+        }
+
+        //console.log("@@@@@@@@@ first final @@@@@@@@@@@");
+        //first.forEach((value: Set<string>, key: string) => { console.log(key, value); });
+        //console.log("@@@@@@@@@ first end @@@@@@@@@@@");
+
+        return first;
+    }
+
+    Union(setA : Set<string>, setB : Set<string>) : Set<string>
+    {
+        let _union = new Set(setA)
+        try {
+            for (let elem of setB) {
+                _union.add(elem)
+            }
+        }
+        catch (error) {}
+        return _union
+    }
+
+    SetCompare(setA: Set<string>, setB: Set<string>): Boolean
+    {
+        var val = false; //false means they don't have anything the first doesn't have
+        let _union = new Set(setA)
+        try
+        {
+            for (let elem of setB)
+            {
+                if (!_union.has(elem)) {
+                    val = true;
+                    break;
+                }
+            }
+        }
+        catch (error) { }
+        return val;
     }
 }
 
