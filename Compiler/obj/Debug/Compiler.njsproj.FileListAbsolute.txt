@@ -1,2 +1,1 @@
 C:\Users\Alex\source\repos\kjakar\tstest\Compiler\bin\Microsoft.NodejsTools.WebRole.dll
-C:\Users\Alex\source\repos\kjakar\tstest\Compiler\obj\Debug\Compiler.njsprojAssemblyReference.cache
