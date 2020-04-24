@@ -1,5 +1,6 @@
 grammar gram;
 
+WHITESPACE : ( ' ' | '\t' | '\n' | '\r' )+ -> skip ;
 SEMI : ';' ;
 WHILE : 'while' ;
 LP : '(' ;
@@ -14,8 +15,9 @@ NUM : [0-9]+ ;
 
 program : braceblock EOF;
 stmts : stmt stmts | ;
-stmt : cond | returnStmt SEMI ;
+stmt : cond | loop |returnstmt SEMI ;
 cond : IF LP expr RP braceblock | IF LP expr RP braceblock ELSE braceblock ;
+loop : WHILE LP expr RP braceblock ;
 braceblock : LBR stmts RBR ;
 expr : NUM ;
-returnStmt : RETURN expr ;
+returnstmt : RETURN expr ;

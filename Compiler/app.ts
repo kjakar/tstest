@@ -216,10 +216,6 @@ function runOneTestcase() {
 
     let input: string = testcase["code"];
 
-    console.log("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
-    console.log(input);
-    console.log("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
-
     let syntaxOK: boolean = testcase["syntaxOK"];
     let expectedReturn: any = testcase["returns"];
     let expectedStdout: string = testcase["output"];

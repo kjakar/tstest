@@ -177,9 +177,6 @@ function runOneTestcase() {
     unlink(objfile);
     unlink(exefile);
     let input = testcase["code"];
-    console.log("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
-    console.log(input);
-    console.log("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
     let syntaxOK = testcase["syntaxOK"];
     let expectedReturn = testcase["returns"];
     let expectedStdout = testcase["output"];

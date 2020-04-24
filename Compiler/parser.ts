@@ -6,21 +6,12 @@ let asmCode: string[] = [];
 
 export function parse(txt: string) : string
 {
-
-   
-
     let stream = new antlr4.InputStream(txt);
-    
     let lexer = new Lexer(stream);
-   
     let tokens = new antlr4.CommonTokenStream(lexer);
-     
-    let parser = new Parser(tokens);
-     
+    let parser = new Parser(tokens);  
     parser.buildParseTrees = true;
 
-
-    
     //change ANTLR's error handling
     let handler = new ErrorHandler();
     lexer.removeErrorListeners();
@@ -113,61 +104,118 @@ function programNodeCode(n: TreeNode) {
 }
 
 function braceblockNodeCode(n: TreeNode) {
+    console.log("entered brace");
     //braceblock -> LBR stmts RBR
     stmtsNodeCode(n.children[1]);
+    console.log("exit brace");
 }
 
-function stmtsNodeCode(n: TreeNode) {
+function stmtsNodeCode(n: TreeNode)
+{
+    console.log("entered stmts");
     //stmts -> stmt stmts | lambda
     if (n.children.length == 0)
         return;
     stmtNodeCode(n.children[0]);
     stmtsNodeCode(n.children[1]);
+    console.log("exit stmts");
 }
 
 function stmtNodeCode(n: TreeNode) {
     //stmt -> cond | loop | return-stmt SEMI
+    console.log("entered stmt");
     let c = n.children[0];
     switch (c.sym) {
         case "cond":
-            condNodeCode(c); break;
+            condNodeCode(c);
+            break;
         case "loop":
-            break; //loopNodeCode(c); break;
-        case "return-stmt":
+            loopNodeCode(c); break;
+        case "returnstmt":
             returnstmtNodeCode(c); break;
         default:
             ICE();
     }
+    console.log("exit stmt");
 }
 
-function returnstmtNodeCode(n: TreeNode) {
+function returnstmtNodeCode(n: TreeNode)
+{
+    console.log("entered return");
     //return-stmt -> RETURN expr
     exprNodeCode(n.children[1]);
     //...move result from expr to rax...
     emit("ret");
+    console.log("exit return");
 }
 
-function exprNodeCode(n: TreeNode) {
+function exprNodeCode(n: TreeNode)
+{
+    console.log("entered expression");
     //expr -> NUM
+    console.log(n);
     let d = parseInt(n.children[0].token.lexeme, 10);
     emit(`mov rax, ${d}`);
+    console.log("exit expression");
 }
 
 function condNodeCode(n: TreeNode) {
     //cond -> IF LP expr RP braceblock |
     //  IF LP expr RP braceblock ELSE braceblock
 
-    if (n.children.length === 5) {
+    if (n.children.length === 5)
+    {
+        console.log("entered if");
         //no 'else'
         exprNodeCode(n.children[2]);    //leaves result in rax
         emit("cmp rax, 0");
         var endifLabel = label();
-        emit(`je ${endifLabel}`);
+        emit(`je ${endifLabel}`); //"je" is jump equal "jne" is jump not equal
         braceblockNodeCode(n.children[4]);
-        emit(`${endifLabel}:`);
-    } else {
-        //...fill this in...
+        emit(`${endifLabel}:`); 
+        console.log("exit if");
+    } else
+    {
+        console.log("entered if else");
+        //we do the same thing but jump to a new lable if not equal
+        exprNodeCode(n.children[2]);    //leaves result in rax
+        emit("cmp rax, 0");
+        var endifLabel = label();
+        var endElseLabel = label();
+
+
+        emit(`jne ${endifLabel}`); // if is true
+        emit(`je ${endElseLabel}`); //
+
+
+        emit(`${endifLabel}:`); //if lable to jump to
+        braceblockNodeCode(n.children[4]); //if brace code
+
+        emit(`${endElseLabel}:`); //else lable to jump to
+        braceblockNodeCode(n.children[6]); //else brace code
+        console.log("exit if else");
     }
+}
+
+function loopNodeCode(n: TreeNode)
+{
+    console.log("entered loop");
+    var startLbl = label()
+    var endLbl = label();
+
+    emit(`${startLbl}:`);
+    exprNodeCode(n.children[2]);
+    emit("cmp rax, 0");
+    emit(`je ${endLbl}`);
+
+    braceblockNodeCode(n.children[4]);
+
+    exprNodeCode(n.children[2]);
+    emit("cmp rax, 0");
+
+    emit(`jne ${startLbl}`);
+    emit(`${endLbl}:`);
+    console.log("exit loop");
 }
 
 let labelCounter = 0;
@@ -179,6 +227,7 @@ function label() {
 
 function ICE()
 {
+    return asmCode.join("\n");
     throw new Error("ICE error");
 }
 

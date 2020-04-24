@@ -47,6 +47,15 @@ gramListener.prototype.exitCond = function(ctx) {
 };
 
 
+// Enter a parse tree produced by gramParser#loop.
+gramListener.prototype.enterLoop = function(ctx) {
+};
+
+// Exit a parse tree produced by gramParser#loop.
+gramListener.prototype.exitLoop = function(ctx) {
+};
+
+
 // Enter a parse tree produced by gramParser#braceblock.
 gramListener.prototype.enterBraceblock = function(ctx) {
 };
@@ -65,12 +74,12 @@ gramListener.prototype.exitExpr = function(ctx) {
 };
 
 
-// Enter a parse tree produced by gramParser#returnStmt.
-gramListener.prototype.enterReturnStmt = function(ctx) {
+// Enter a parse tree produced by gramParser#returnstmt.
+gramListener.prototype.enterReturnstmt = function(ctx) {
 };
 
-// Exit a parse tree produced by gramParser#returnStmt.
-gramListener.prototype.exitReturnStmt = function(ctx) {
+// Exit a parse tree produced by gramParser#returnstmt.
+gramListener.prototype.exitReturnstmt = function(ctx) {
 };
 
 
