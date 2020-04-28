@@ -186,7 +186,7 @@ function orexpNodeCode(n: TreeNode): VarType
         if (andexpType != VarType.INTEGER)
             ICE();
         emit(`${lbl}: ; or node`);
-        console.log("exit orexp : 2");
+        console.log("exit orexp :  2");
         return VarType.INTEGER;   //always integer, even if float operands
     }
     
