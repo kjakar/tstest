@@ -150,8 +150,8 @@ function returnstmtNodeCode(n: TreeNode)
     //return-stmt -> RETURN expr
     exprNodeCode(n.children[1]);
     //...move result from expr to rax...
-    emit("pop rax");
-    emit("ret");
+    emit("pop rax ; retrun node");
+    emit("ret ; retrun node");
     console.log("exit return");
 }
 
@@ -177,15 +177,15 @@ function orexpNodeCode(n: TreeNode): VarType
         if (orexpType != VarType.INTEGER)
             ICE();
         let lbl = label();
-        emit("cmp qword [rsp], 0");
-        emit(`jne ${lbl}`);
-        emit("add rsp,8");      //discard left result (0)
+        emit("cmp qword [rsp], 0 ; or node");
+        emit(`jne ${lbl} ; or node`);
+        emit("add rsp,8 ; or node");      //discard left result (0)
         let andexpType = andexpNodeCode(n.children[2]);
         console.log(andexpType);
         convertStackTopToZeroOrOneInteger(andexpType);
         if (andexpType != VarType.INTEGER)
             ICE();
-        emit(`${lbl}:`);
+        emit(`${lbl}: ; or node`);
         console.log("exit orexp : 2");
         return VarType.INTEGER;   //always integer, even if float operands
     }
@@ -204,14 +204,14 @@ function andexpNodeCode(n: TreeNode): VarType {
     if (andexpType != VarType.INTEGER)
         ICE();
     let lbl = label();
-    emit("cmp qword [rsp], 0");
-    emit(`je ${lbl}`);
-    emit("add rsp, 8");
+    emit("cmp qword [rsp], 0 ; and node");
+    emit(`je ${lbl} ; and node`);
+    emit("add rsp, 8 ; and node");
     let notexpType = notexpNodeCode(n.children[2]);
     convertStackTopToZeroOrOneInteger(notexpType);
     if (notexpType != VarType.INTEGER)
         ICE();
-    emit(`${lbl}:`);
+    emit(`${lbl}: ; and node`);
     console.log("exit andexp : 2");
     return VarType.INTEGER;
 }
@@ -230,16 +230,16 @@ function notexpNodeCode(n: TreeNode): VarType
         ICE();
     let lbl = label();
     let lbl2 = label();
-    emit("mov rax, [rsp]");
-    emit("cmp rax, 0");
-    emit(`je ${lbl}`);
-    emit("mov rax, 0");
-    emit(`jmp ${lbl2}`);
-    emit(`${lbl}:`);
-    emit("mov rax, 1");
-    emit(`${lbl2}:`);
-    emit("add rsp, 8");
-    emit("push rax");
+    emit("mov rax, [rsp] ; not node");
+    emit("cmp rax, 0 ; not node");
+    emit(`je ${lbl} ; not node`);
+    emit("mov rax, 0 ; not node");
+    emit(`jmp ${lbl2} ; not node`);
+    emit(`${lbl}: ; not node`);
+    emit("mov rax, 1 ; not node");
+    emit(`${lbl2}: ; not node`);
+    emit("add rsp, 8 ; not node");
+    emit("push rax ; not node");
     console.log("exit notexp");
     return VarType.INTEGER;
 }
@@ -254,20 +254,20 @@ function sumNodeCode(n: TreeNode): VarType {
         let termtype = termNodeCode(n.children[2]);
         if (sumtype !== VarType.INTEGER || termtype != VarType.INTEGER)
            ICE();
-        emit("pop rbx");    //second operand
-        emit("pop rax");    //first operand
+        emit("pop rbx ; sum node");    //second operand
+        emit("pop rax ; sum node");    //first operand
 
         switch (n.children[1].sym) {
             case "PLUS":
-                emit("add rax, rbx");
+                emit("add rax, rbx ; sum node");
                 break;
             case "MINUS":
-                emit("sub rax, rbx");
+                emit("sub rax, rbx ; sum node");
                 break;
             default:
                 ICE
         }
-        emit("push rax");
+        emit("push rax ; sum node");
         console.log("exit sum");
         return VarType.INTEGER;
     }
@@ -286,20 +286,20 @@ function relNodeCode(n: TreeNode): VarType {
         let sum2Type = sumNodeCode(n.children[2]);
         if (sum1Type !== VarType.INTEGER || sum2Type != VarType.INTEGER)
             ICE();
-        emit("pop rax"); //second operand
+        emit("pop rax ; rel node"); //second operand
         //first operand still on stack
-        emit("cmp [rsp],rax");    //do the compare
+        emit("cmp [rsp],rax ; rel node");    //do the compare
         switch (n.children[1].token.lexeme) {
-            case ">=": emit("setge al"); break;
-            case "<=": emit("setle al"); break;
-            case ">": emit("setg  al"); break;
-            case "<": emit("setl  al"); break;
-            case "==": emit("sete  al"); break;
-            case "!=": emit("setne al"); break;
+            case ">=": emit("setge al ; rel node"); break;
+            case "<=": emit("setle al ; rel node"); break;
+            case ">": emit("setg  al ; rel node"); break;
+            case "<": emit("setl  al ; rel node"); break;
+            case "==": emit("sete  al ; rel node"); break;
+            case "!=": emit("setne al ; rel node"); break;
             default: ICE()
         }
-        emit("movzx qword rax, al");   //move with zero extend
-        emit("mov [rsp], rax");
+        emit("movzx qword rax, al ; rel node");   //move with zero extend
+        emit("mov [rsp], rax ; rel node");
         console.log("exit rel : 2");
         return VarType.INTEGER;
     }
@@ -316,21 +316,21 @@ function termNodeCode(n: TreeNode): VarType {
     let t1 = negNodeCode(n.children[2]);
     if (t0 != VarType.INTEGER || t1 != VarType.INTEGER)
         ICE();
-    emit("pop rax");
-    emit("pop rbx");
+    emit("pop rax ; term node");
+    emit("pop rbx ; term node");
 
     switch (n.children[1].token.lexeme)
     {
         case "*":
-            emit("imul rax, rbx");
+            emit("imul rax, rbx ; term node");
             break;
         case "/":
-            emit("idiv rax, rbx");
+            emit("idiv rax, rbx ; term node");
             break;
         default:
             ICE();
     }
-    emit("push rax");
+    emit("push rax ; term node");
 
     console.log("exit term");
     return VarType.INTEGER;
@@ -346,13 +346,13 @@ function negNodeCode(n: TreeNode): VarType {
     let type = negNodeCode(n.children[1]);
     if (type != VarType.INTEGER)
         ICE();
-    emit("pop rax");
-    emit("movq xmm0, rax");
-    emit("mov rax, -1");
-    emit("movq xmm1, rax");
-    emit("mulsd xmm0, xmm1");
-    emit("movq rax, xmm0");
-    emit("push rax");
+    emit("pop rax ; neg node");
+    emit("movq xmm0, rax ; neg node");
+    emit("mov rax, -1 ; neg node");
+    emit("movq xmm1, rax ; neg node");
+    emit("mulsd xmm0, xmm1 ; neg node");
+    emit("movq rax, xmm0 ; neg node");
+    emit("push rax ; neg node");
     console.log("exit neg");
     return VarType.INTEGER;
 }
@@ -360,10 +360,10 @@ function negNodeCode(n: TreeNode): VarType {
 function convertStackTopToZeroOrOneInteger(t: VarType) {
     if (t == VarType.INTEGER) {
         console.log("CONVERTING TO ZERO OR ONE : " + t);
-        emit("cmp qword [rsp], 0");
-        emit("setne al");
-        emit("movzx rax, al");
-        emit("mov [rsp], rax");
+        emit("cmp qword [rsp], 0 ; convert 1/0");
+        emit("setne al ; convert 1/0");
+        emit("movzx rax, al ; convert 1/0");
+        emit("mov [rsp], rax ; convert 1/0");
     } else {
         ICE();
     }
@@ -376,7 +376,7 @@ function factorNodeCode(n: TreeNode): VarType {
     switch (child.sym) {
         case "NUM":
             let v = parseInt(child.token.lexeme, 10);
-            emit(`push qword ${v}`)
+            emit(`push qword ${v} ; factor node`)
             console.log("exit factor");
             return VarType.INTEGER;
         case "LP":
@@ -396,32 +396,32 @@ function condNodeCode(n: TreeNode) {
         console.log("entered if");
         //no 'else'
         exprNodeCode(n.children[2]);    //leaves result in rax
-        emit("pop rax");
-        emit("cmp rax, 0");
+        emit("pop rax ; cond node");
+        emit("cmp rax, 0 ; cond node");
         var endifLabel = label();
-        emit(`je ${endifLabel}`); //"je" is jump equal "jne" is jump not equal
+        emit(`je ${endifLabel} ; cond node`); //"je" is jump equal "jne" is jump not equal
         braceblockNodeCode(n.children[4]);
-        emit(`${endifLabel}:`); 
+        emit(`${endifLabel}: ; cond node`); 
         console.log("exit if");
     } else
     {
         console.log("entered if else");
         //we do the same thing but jump to a new lable if not equal
         exprNodeCode(n.children[2]);    //leaves result in rax
-        emit("pop rax");
-        emit("cmp rax, 0");
+        emit("pop rax ; cond node");
+        emit("cmp rax, 0 ; cond node");
         var endifLabel = label();
         var endElseLabel = label();
 
 
-        emit(`jne ${endifLabel}`); // if is true
-        emit(`je ${endElseLabel}`); //
+        emit(`jne ${endifLabel} ; cond node`); // if is true
+        emit(`je ${endElseLabel} ; cond node`); //
 
 
-        emit(`${endifLabel}:`); //if lable to jump to
+        emit(`${endifLabel}: ; cond node`); //if lable to jump to
         braceblockNodeCode(n.children[4]); //if brace code
 
-        emit(`${endElseLabel}:`); //else lable to jump to
+        emit(`${endElseLabel}: ; cond node`); //else lable to jump to
         braceblockNodeCode(n.children[6]); //else brace code
         console.log("exit if else");
     }
@@ -433,20 +433,20 @@ function loopNodeCode(n: TreeNode)
     var startLbl = label()
     var endLbl = label();
 
-    emit(`${startLbl}:`);
+    emit(`${startLbl}: ; loop node `);
     exprNodeCode(n.children[2]);
-    emit("pop rax");
-    emit("cmp rax, 0");
-    emit(`je ${endLbl}`);
+    emit("pop rax ; loop node ");
+    emit("cmp rax, 0 ; loop node ");
+    emit(`je ${endLbl} ; loop node `);
 
     braceblockNodeCode(n.children[4]);
 
     exprNodeCode(n.children[2]);
-    emit("pop rax");
-    emit("cmp rax, 0");
+    emit("pop rax ; loop node ");
+    emit("cmp rax, 0 ; loop node ");
 
-    emit(`jne ${startLbl}`);
-    emit(`${endLbl}:`);
+    emit(`jne ${startLbl} ; loop node `);
+    emit(`${endLbl}: ; loop node `);
     console.log("exit loop");
 }
 
