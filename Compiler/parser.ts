@@ -221,9 +221,10 @@ function notexpNodeCode(n: TreeNode): VarType
     console.log("entered notexp");
     // notexp -> NOT notexp | rel
     if (n.children.length == 1) {
-        relNodeCode(n.children[0]);
         console.log("exit notexp");
-        return;
+        return relNodeCode(n.children[0]);
+       
+        
     }
     let type = notexpNodeCode(n.children[1]);
     if (type != VarType.INTEGER)
