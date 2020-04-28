@@ -2,7 +2,7 @@
 let startAt = 1;
 
 //to stop early, change this
-let endAt = 99999;
+let endAt = 999999;
 
 //set this to true to get more status messages
 const VERBOSE = false;

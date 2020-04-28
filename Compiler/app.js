@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //to start at a given test number, change this
 let startAt = 1;
 //to stop early, change this
-let endAt = 99999;
+let endAt = 999999;
 //set this to true to get more status messages
 const VERBOSE = false;
 const asmfile = "xyz.asm";

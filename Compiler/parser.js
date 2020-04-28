@@ -285,19 +285,34 @@ function termNodeCode(n) {
     let t1 = negNodeCode(n.children[2]);
     if (t0 != VarType.INTEGER || t1 != VarType.INTEGER)
         ICE();
-    emit("pop rax ; term node");
-    emit("pop rbx ; term node");
     switch (n.children[1].token.lexeme) {
+        case "\%":
+            emit("xor rdx, rdx");
+            emit("pop rbx ; term node mod");
+            emit("pop rax ; term node mod");
+            emit("idiv rbx ; term node mod");
+            emit("push rdx ; term node mod");
+            break;
         case "*":
-            emit("imul rax, rbx ; term node");
+            emit("pop rax ; term node mul");
+            emit("pop rbx ; term node mul");
+            emit("imul rax, rbx ; term node mul");
+            emit("push rax ; term node mul");
             break;
         case "/":
-            emit("idiv rax, rbx ; term node");
+            //emit("pop eax ; term node");
+            //emit("pop edx ; term node");
+            //emit("idiv edx ; term node");
+            //emit("push eax ; term node");
+            emit("xor rdx, rdx ; term node div");
+            emit("pop rbx ; term node  div");
+            emit("pop rax ; term node  div");
+            emit("idiv rbx ; term node  div");
+            emit("push rax ; term node  div");
             break;
         default:
             ICE();
     }
-    emit("push rax ; term node");
     console.log("exit term");
     return VarType.INTEGER;
 }
@@ -310,12 +325,19 @@ function negNodeCode(n) {
     if (type != VarType.INTEGER)
         ICE();
     emit("pop rax ; neg node");
-    emit("movq xmm0, rax ; neg node");
-    emit("mov rax, -1 ; neg node");
-    emit("movq xmm1, rax ; neg node");
-    emit("mulsd xmm0, xmm1 ; neg node");
-    emit("movq rax, xmm0 ; neg node");
+    emit("neg rax ; neg node");
+    //emit("movq xmm0, rax ; neg node");
+    //emit("mov rax, -1 ; neg node");
+    //emit("movq xmm1, rax ; neg node");
+    //emit("mulsd xmm0, xmm1 ; neg node");
+    //emit("movq rax, xmm0 ; neg node");
     emit("push rax ; neg node");
+    /*
+    emit("pop rax ; neg node");
+    emit("move rbx, -1 ; neg node");
+    emit("imul rax, rbx ; neg node");
+    emit("push rax ; neg node");
+    */
     console.log("exit neg");
     return VarType.INTEGER;
 }
