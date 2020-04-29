@@ -1,10 +1,15 @@
 declare var require: any;
+var fs = require('fs');
 let antlr4 = require('./antlr4')
 let Lexer = require('./gramLexer.js').gramLexer;
 let Parser = require('./gramParser.js').gramParser;
 
+let graphviz = ""
+let graphSet = new Set();
+
 export function parse(txt: string)
 {
+    graphviz = graphviz + "digraph G { \n"
     
     let stream = new antlr4.InputStream(txt);
     
@@ -30,11 +35,35 @@ export function parse(txt: string)
     // ... */
 
 
-    let root : TreeNode = walk(parser,antlrroot);
+    let root: TreeNode = walk(parser, antlrroot);
 
+    buildGraph(root);
+
+    graphSet.forEach(function (value)
+    {
+        graphviz = graphviz + value;
+    });
+
+    graphviz = graphviz + "}\n\n\n";
+
+    fs.writeFile('graphziv.txt', graphviz, function (err) {
+        if (err) throw err;
+        console.log("Saved graph to graphziv.txt");
+    }); 
 }
 
+function buildGraph(root: TreeNode)
+{
+    for (let i = 0; i < root.children.length; i++)
+    {
+        graphSet.add("\"" + root.sym + "\" -> " + "\"" + root.children[i].sym + "\"\n");
+    }
 
+    for (let i = 0; i < root.children.length; i++)
+    {
+        buildGraph(root.children[i]);
+    }
+}
 
 function walk(parser: any, node: any)
 {
@@ -50,8 +79,8 @@ function walk(parser: any, node: any)
         return new TreeNode(sym, T)
     } else {
         let idx: number = p.ruleIndex;
-        let sym: string = parser.ruleNames[idx]
-        let N = new TreeNode(sym, undefined)
+        let sym: string = parser.ruleNames[idx];
+        let N = new TreeNode(sym, undefined);
         for (let i = 0; i < node.getChildCount(); ++i) {
             let child: any = node.getChild(i)
             N.children.push(walk(parser, child));

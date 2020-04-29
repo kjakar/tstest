@@ -1,9 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var fs = require('fs');
 let antlr4 = require('./antlr4');
 let Lexer = require('./gramLexer.js').gramLexer;
 let Parser = require('./gramParser.js').gramParser;
+let graphviz = "";
+let graphSet = new Set();
 function parse(txt) {
+    graphviz = graphviz + "digraph G { \n";
     let stream = new antlr4.InputStream(txt);
     let lexer = new Lexer(stream);
     let tokens = new antlr4.CommonTokenStream(lexer);
@@ -19,8 +23,26 @@ function parse(txt) {
     let antlrroot = parser.start();
     // ... */
     let root = walk(parser, antlrroot);
+    buildGraph(root);
+    graphSet.forEach(function (value) {
+        graphviz = graphviz + value;
+    });
+    graphviz = graphviz + "}\n";
+    fs.writeFile('graphziv.txt', graphviz, function (err) {
+        if (err)
+            throw err;
+        console.log("Saved graph to graphziv.txt");
+    });
 }
 exports.parse = parse;
+function buildGraph(root) {
+    for (let i = 0; i < root.children.length; i++) {
+        graphSet.add("\"" + root.sym + "\" -> " + "\"" + root.children[i].sym + "\"\n");
+    }
+    for (let i = 0; i < root.children.length; i++) {
+        buildGraph(root.children[i]);
+    }
+}
 function walk(parser, node) {
     let p = node.getPayload();
     if (p.ruleIndex === undefined) {
